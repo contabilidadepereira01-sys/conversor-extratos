@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversor de Extratos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: ferramenta de escritorio contabil, direta e precisa.
+   IDEA: caixa de remedio - blocos retangulares chapados, rotulo forte, bula clara.
+   PICTURE: a propria ferramenta: bloco esmeralda de soltar o PDF + resultados conferidos.
+   COLOUR and TYPE: branco, esmeralda #00a86b, rosa claro #ffd6e0, preto; noite #04140d. Schibsted Grotesk.
+   LAYOUT: faixa do titulo, ferramenta em dois retangulos, resultados empilhados, bula no rosa. */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#04140d);--ink:light-dark(#0b0b0b,#e9f5ef);--mute:light-dark(#4d5550,#9fb8ab);
+--em:#00a86b;--em-ink:#ffffff;--rosa:light-dark(#ffd6e0,#3a1f27);--rosa-ink:light-dark(#2a0f17,#ffdbe4);
+--linha:light-dark(#e3e7e5,#17352a);--card:light-dark(#ffffff,#082119);--verm:light-dark(#c62828,#ff8a80);
+--amar:light-dark(#8a5a00,#ffd27a);--fverm:light-dark(#fbe3e3,#3b1414);--famar:light-dark(#fff6d6,#3a2e0c)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Schibsted Grotesk",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-weight:800;font-size:clamp(32px,4.4vw,48px);line-height:1.05;margin:0 0 10px;text-wrap:balance}
+h2{font-weight:800;font-size:24px;line-height:1.15;margin:0 0 12px}
+.lead{color:var(--mute);max-width:66ch;margin:0}
+.topo{padding-bottom:20px}
+.caixa{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);border:2px solid var(--ink);margin-top:22px}
+#drop{background:var(--em);color:var(--em-ink);min-height:300px;padding:28px;display:flex;flex-direction:column;justify-content:center;
+ align-items:flex-start;gap:14px;cursor:pointer;position:relative;outline-offset:-6px}
+#drop:focus-visible{outline:3px solid var(--ink)}
+#drop.sobre{background:#008f5b}
+#drop .grande{font-weight:800;font-size:clamp(26px,3.2vw,38px);line-height:1.05;max-width:16ch}
+#drop .peq{opacity:.9;font-size:15px;max-width:44ch}
+.pdfico{width:84px;height:100px;position:absolute;right:28px;bottom:24px;opacity:.95}
+.botao{font:inherit;font-weight:700;font-size:16px;min-height:44px;padding:10px 18px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+.botao.claro{background:transparent;color:var(--ink)}
+.botao.em{background:var(--em);border-color:var(--em);color:#fff}
+.botao:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--em);outline-offset:2px}
+#drop .botao{background:#fff;color:#0b0b0b;border-color:#fff}
+.opcoes{padding:24px;display:flex;flex-direction:column;gap:16px;border-left:2px solid var(--ink)}
+label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
+select,input[type=password]{width:100%;font:inherit;font-size:16px;min-height:44px;padding:8px 10px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:0}
+.dica{font-size:13px;color:var(--mute);margin:6px 0 0}
+.privado{display:flex;gap:10px;align-items:flex-start;font-size:14px;background:var(--rosa);color:var(--rosa-ink);padding:12px 14px}
+.privado svg{flex:none;margin-top:2px}
+#lista{display:flex;flex-direction:column;gap:18px}
+.vazio{border:2px dashed var(--linha);padding:22px;color:var(--mute);text-align:center}
+.res{border:2px solid var(--ink);background:var(--card)}
+.res-cab{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:2px solid var(--ink)}
+.res-cab h3{margin:0;font-size:18px;font-weight:800;overflow-wrap:anywhere}
+.selo{font-weight:800;font-size:13px;padding:4px 10px;color:#fff;white-space:nowrap}
+.CONFERIDO{background:var(--em)}.DIVERGENTE,.ERRO{background:#c62828}.SEM{background:#9a6400}.LENDO{background:#5b6b63}
+.acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-bottom:2px solid var(--ink)}
+.nums div{padding:12px 18px;border-right:1px solid var(--linha);border-bottom:1px solid var(--linha)}
+.nums b{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.nums span{font-size:18px;font-weight:700;white-space:nowrap;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.aviso{padding:10px 18px;font-size:14px;border-bottom:1px solid var(--linha)}
+.aviso.v{background:var(--fverm);color:var(--verm)}.aviso.a{background:var(--famar);color:var(--amar)}
+.scroll{overflow:auto;max-height:440px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{position:sticky;top:0;background:var(--card);text-align:left;font-size:13px;padding:8px 10px;border-bottom:2px solid var(--ink);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--linha);vertical-align:top}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.dv td{background:var(--fverm)}tr.av td{background:var(--famar)}
+.msg{font-size:14px;padding:0 18px 12px;color:var(--mute)}
+.bula{background:var(--rosa);color:var(--rosa-ink)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.cols p{margin:6px 0 0;font-size:15px}
+.cols h3{margin:0;font-size:17px;font-weight:800}
+details{margin-top:24px}summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+.bancos{columns:3 200px;font-size:14px;margin:8px 0 0;padding-left:18px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+#modal.on{display:flex}
+.janela{background:var(--bg);border:2px solid var(--ink);padding:22px;max-width:420px;width:100%}
+.janela p{margin:0 0 12px}
+.janela .acoes{margin-top:14px;justify-content:flex-end}
+footer{font-size:13px;color:var(--mute)}
+@media(max-width:760px){.caixa{grid-template-columns:minmax(0,1fr)}.opcoes{border-left:0;border-top:2px solid var(--ink)}.cols{grid-template-columns:minmax(0,1fr)}
+ #drop{min-height:230px}.pdfico{width:56px;height:68px;right:18px;bottom:18px}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--linha)}
+ .stack td{display:flow-root;border:0;padding:2px 10px;padding-inline-start:7.5em;text-align:start}
+ .stack td::before{content:attr(data-l);float:inline-start;width:7em;margin-inline-start:-7em;color:var(--mute)}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:no-preference){.res{animation:entra .25s ease-out}@keyframes entra{from{opacity:0;transform:translateY(6px)}}}
+</style>
+</head>
+<body>
+<header class="band topo"><div class="wrap">
+  <h1>Conversor de extratos PDF para Excel</h1>
+  <p class="lead">Envie o extrato de qualquer banco. O conversor reconhece o layout, extrai cada lançamento e confere o saldo linha a linha antes de gerar a planilha.</p>
+
+  <div class="caixa">
+    <div id="drop" tabindex="0" role="button" aria-label="Selecionar extratos em PDF">
+      <div class="grande">Solte aqui os PDFs dos extratos</div>
+      <div class="peq">Ou clique para escolher. Pode mandar vários de uma vez.</div>
+      <span class="botao">Escolher PDFs</span>
+      <svg class="pdfico" viewBox="0 0 84 100" aria-hidden="true">
+        <path d="M6 4h50l22 22v70H6z" fill="#fff"/><path d="M56 4v22h22" fill="#cdeee0"/>
+        <rect x="16" y="40" width="52" height="7" fill="#00a86b"/><rect x="16" y="54" width="40" height="7" fill="#9fdcc2"/>
+        <rect x="16" y="68" width="52" height="7" fill="#9fdcc2"/><rect x="16" y="82" width="30" height="7" fill="#ffd6e0"/>
+      </svg>
+    </div>
+    <div class="opcoes">
+      <div>
+        <label for="banco">Banco</label>
+        <select id="banco"></select>
+        <p class="dica">Se a detecção automática errar, escolha o banco e converta de novo.</p>
+      </div>
+      <div>
+        <label for="senha">Senha do PDF</label>
+        <input type="password" id="senha" placeholder="Só se o PDF tiver senha" autocomplete="off">
+      </div>
+      <div class="privado">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V8a6 6 0 0 1 12 0v2h1v12H5V10zm2 0h8V8a4 4 0 0 0-8 0z" fill="currentColor"/></svg>
+        <span>O PDF é lido aqui no seu navegador. O arquivo e os dados do extrato não são enviados a nenhum servidor.</span>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="arq" accept="application/pdf,.pdf" multiple hidden>
+</div></header>
+
+<main class="band" style="padding-top:8px"><div class="wrap">
+  <h2>Extratos convertidos</h2>
+  <div id="lista"><div class="vazio" id="vazio">Nenhum extrato ainda. Os resultados aparecem aqui, com a conferência de saldo e o botão para baixar o Excel.</div></div>
+</div></main>
+
+<section class="band bula"><div class="wrap">
+  <h2>Como ler o resultado</h2>
+  <div class="cols">
+    <div><h3>CONFERIDO</h3><p>Saldo anterior mais os lançamentos dá exatamente o saldo impresso em cada ponto do extrato e no saldo final.</p></div>
+    <div><h3>DIVERGENTE</h3><p>Algum saldo não bateu. A linha aparece em vermelho na tela e no Excel, para você conferir no PDF.</p></div>
+    <div><h3>SEM SALDO PARA CONFERIR</h3><p>O PDF não traz saldo. Confira os totais manualmente. Linhas em amarelo têm o sinal deduzido pelo histórico.</p></div>
+  </div>
+  <details><summary>Bancos com perfil próprio</summary><ul class="bancos" id="bancos"></ul>
+    <p class="dica" style="color:inherit">Outros bancos usam o layout genérico, que lê as colunas pelo cabeçalho do extrato.</p></details>
+  <p class="dica" style="color:inherit;margin-top:18px">O Excel tem três abas: Extrato (lançamentos com crédito, débito, saldo e conferência), Resumo (banco, conta, período, totais e resultado) e Linhas não importadas (tudo o que o PDF tinha e não virou lançamento). PDF escaneado (imagem) não tem texto e não pode ser lido.</p>
+</div></section>
+<footer class="band" style="padding-block:18px"><div class="wrap">Sansecont Contabilidade · Conversor de extratos v1.0</div></footer>
+
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mtit">
+  <form class="janela" id="mform">
+    <h2 id="mtit" style="font-size:20px">PDF protegido por senha</h2>
+    <p id="mtxt"></p>
+    <label for="msenha">Senha</label>
+    <input type="password" id="msenha" autocomplete="off">
+    <div class="acoes"><button type="button" class="botao claro" id="mcanc">Cancelar</button><button type="submit" class="botao">Abrir</button></div>
+  </form>
+</div>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf.worker.min.js"></script>
+<script src="lib/exceljs.min.js"></script>
+<script src="bancos.js"></script>
+<script src="motor.js"></script>
+<script src="excel.js"></script>
+<script>
+{
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const F = Motor.fmtBRL;
+  const drop = $("#drop"), arq = $("#arq"), lista = $("#lista");
+  let downloads = null;
+
+  $("#banco").innerHTML = Motor.BANCOS.map(b => `<option value="${b.id}">${esc(b.nome)}</option>`).join("");
+  $("#bancos").innerHTML = Motor.BANCOS.filter(b => b.chaves && b.chaves.length).map(b => `<li>${esc(b.nome)}${b.codigo ? " (" + b.codigo + ")" : ""}</li>`).join("");
+
+  (async () => {
+    try { downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { downloads = null; }
+  })();
+
+  drop.addEventListener("click", () => arq.click());
+  drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); arq.click(); } });
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("sobre"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("sobre"));
+  drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("sobre"); processar([...e.dataTransfer.files]); });
+  arq.addEventListener("change", () => { processar([...arq.files]); arq.value = ""; });
+
+  function pedirSenha(nome, incorreta) {
+    return new Promise(ok => {
+      $("#mtxt").textContent = (incorreta ? "Senha incorreta. " : "") + `O arquivo ${nome} está protegido. Muitos bancos usam parte do CPF ou CNPJ.`;
+      $("#msenha").value = ""; $("#modal").classList.add("on"); $("#msenha").focus();
+      const fim = v => { $("#modal").classList.remove("on"); $("#mform").onsubmit = null; $("#mcanc").onclick = null; ok(v); };
+      $("#mform").onsubmit = e => { e.preventDefault(); fim($("#msenha").value); };
+      $("#mcanc").onclick = () => fim(null);
+    });
+  }
+
+  async function processar(files) {
+    const pdfs = files.filter(f => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
+    if (!pdfs.length) return;
+    $("#vazio")?.remove();
+    for (const f of pdfs) await umArquivo(f);
+  }
+
+  async function umArquivo(f) {
+    const box = document.createElement("article");
+    box.className = "res";
+    box.innerHTML = `<div class="res-cab"><h3>${esc(f.name)}</h3><span class="selo LENDO">LENDO...</span></div>`;
+    lista.prepend(box);
+    const dados = new Uint8Array(await f.arrayBuffer());
+    let senha = $("#senha").value || null, paginas;
+    for (;;) {
+      try { paginas = await Motor.lerPdf(pdfjsLib, dados.slice(), senha); break; }
+      catch (e) {
+        if (e.senha) {
+          senha = await pedirSenha(f.name, !!senha);
+          if (senha === null) { erro(box, f.name, "PDF protegido por senha. Conversão cancelada."); return; }
+          continue;
+        }
+        erro(box, f.name, "Não foi possível ler este PDF: " + (e.message || e)); return;
+      }
+    }
+    let res;
+    try { res = Motor.extrair(paginas, $("#banco").value); }
+    catch (e) { erro(box, f.name, "Erro na extração: " + (e.message || e)); return; }
+    mostrar(box, f, res);
+  }
+
+  function erro(box, nome, msg) {
+    box.innerHTML = `<div class="res-cab"><h3>${esc(nome)}</h3><span class="selo ERRO">ERRO</span></div><p class="msg" style="padding-top:12px">${esc(msg)}</p>`;
+  }
+
+  function dataBR(d) { return String(d.d).padStart(2, "0") + "/" + String(d.m).padStart(2, "0") + "/" + d.y; }
+
+  function mostrar(box, f, res) {
+    const st = res.status.startsWith("SEM") ? "SEM" : res.status;
+    const nomeXlsx = f.name.replace(/\.pdf$/i, "") + ".xlsx";
+    const avisos = [];
+    if (res.divergencias) avisos.push(`<div class="aviso v">${res.divergencias} ponto(s) de saldo não batem. Linhas em vermelho.</div>`);
+    if (res.sinais_a_verificar) avisos.push(`<div class="aviso a">${res.sinais_a_verificar} lançamento(s) com sinal deduzido pelo histórico. Linhas em amarelo.</div>`);
+    if (res.paginas_sem_texto.length) avisos.push(`<div class="aviso v">Páginas escaneadas, sem texto: ${res.paginas_sem_texto.join(", ")}.</div>`);
+    if (!res.transacoes.length) avisos.push(`<div class="aviso v">Nenhum lançamento encontrado. Tente escolher o banco manualmente.</div>`);
+    const meta = res.metadados || {};
+    const linhas = res.transacoes.map(t => {
+      const cls = t.confere === false ? "dv" : (t.fonte_sinal.includes("verificar") ? "av" : "");
+      return `<tr class="${cls}"><td data-l="Data">${dataBR(t.data)}</td><td data-l="Histórico">${esc(t.descricao)}</td><td data-l="Documento">${esc(t.documento)}</td><td data-l="Valor" class="n">${F(t.valor)}</td><td data-l="Saldo" class="n">${F(t.saldo)}</td><td data-l="Conferência">${t.confere === null ? "" : (t.confere ? "OK" : "DIVERGE")}</td></tr>`;
+    }).join("");
+    box.innerHTML = `
+      <div class="res-cab"><h3>${esc(f.name)}</h3>
+        <div class="acoes"><span class="selo ${st}">${esc(res.status)}</span>
+          <button class="botao em" data-baixar>Baixar Excel</button>
+          <button class="botao claro" data-copiar>Copiar para o Excel</button></div></div>
+      <div class="nums">
+        <div><b>Banco</b><span style="white-space:normal">${esc(res.banco)}${res.banco_detectado ? "" : " (escolhido)"}</span></div>
+        <div><b>Lançamentos</b><span>${res.transacoes.length}</span></div>
+        <div><b>Saldo inicial</b><span>${F(res.saldo_inicial) || "—"}</span></div>
+        <div><b>Créditos</b><span>${F(res.creditos)}</span></div>
+        <div><b>Débitos</b><span>${F(res.debitos)}</span></div>
+        <div><b>Saldo final no extrato</b><span>${F(res.saldo_final_informado) || "—"}</span></div>
+        <div><b>Saldo final calculado</b><span>${F(res.saldo_final_calculado) || "—"}</span></div>
+        ${meta.conta ? `<div><b>Agência / conta</b><span style="white-space:normal">${esc(meta.agencia || "")} / ${esc(meta.conta)}</span></div>` : ""}
+      </div>
+      ${avisos.join("")}
+      <div class="scroll"><table class="stack"><thead><tr><th>Data</th><th>Histórico</th><th>Documento</th><th style="text-align:right">Valor</th><th style="text-align:right">Saldo</th><th>Conferência</th></tr></thead><tbody>${linhas}</tbody></table></div>
+      <p class="msg" data-msg></p>`;
+    const msg = box.querySelector("[data-msg]");
+    box.querySelector("[data-baixar]").addEventListener("click", async ev => {
+      const b = ev.currentTarget; b.disabled = true; msg.textContent = "Gerando o Excel...";
+      try {
+        const buf = await GeradorExcel.gerarExcel(ExcelJS, res, f.name);
+        const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        if (downloads) {
+          await downloads.save({ filename: nomeXlsx, data: blob });   // dentro do claude.ai
+        } else {
+          const url = URL.createObjectURL(blob), a = document.createElement("a");   // site proprio
+          a.href = url; a.download = nomeXlsx; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 30000);
+        }
+        msg.textContent = `${nomeXlsx} salvo.`;
+      } catch (e) {
+        msg.textContent = e && e.code === "declined" ? "Download cancelado." :
+          (e && e.code === "rate_limited" ? "Já há uma confirmação aberta. Tente de novo em instantes." :
+          "Não foi possível baixar aqui. Use Copiar para o Excel e cole na planilha.");
+      }
+      b.disabled = false;
+    });
+    box.querySelector("[data-copiar]").addEventListener("click", async () => {
+      const num = c => c === null || c === undefined ? "" : (c / 100).toFixed(2).replace(".", ",");
+      const tsv = ["Data\tHistórico\tDocumento\tCrédito\tDébito\tValor\tSaldo (extrato)\tSaldo calculado\tConferência"]
+        .concat(res.transacoes.map(t => [dataBR(t.data), t.descricao.replace(/\t/g, " "), t.documento, t.valor > 0 ? num(t.valor) : "",
+          t.valor < 0 ? num(-t.valor) : "", num(t.valor), num(t.saldo), num(t.saldo_calculado),
+          t.confere === null ? "" : (t.confere ? "OK" : "DIVERGE")].join("\t"))).join("\n");
+      try { await navigator.clipboard.writeText(tsv); msg.textContent = "Tabela copiada. Abra o Excel e cole (Ctrl+V)."; }
+      catch (e) { msg.textContent = "O navegador bloqueou a cópia. Use Baixar Excel."; }
+    });
+  }
+}
+</script>
+</body>
+</html>
